@@ -267,6 +267,8 @@ def create_summary_video(input_video_path, target_classes, confidence_threshold,
             if os.path.exists(output_video_path):
                 os.remove(output_video_path)
                 logger.warning("No objects found in the video. Empty output video deleted.")
+
+            
             
             # Prepare summary data with no objects found message
             summary_data = {
@@ -374,7 +376,7 @@ def create_summary_video(input_video_path, target_classes, confidence_threshold,
 
 
 # API function for backend integration
-def summarize_video(input_video, classes=None, confidence=0.8, output_dir=None, model_path=None, save_csv=True, save_json=True):
+def summarize_video(input_video, classes=None, confidence=0.8, output_dir=None, model_path=None, save_csv=False, save_json=False):
     """
     Process a video to detect and track objects, creating a summary video and detailed analytics.
     

@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initialize tooltips
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(toolttipTriggerEl);
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         }
         
