@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Surveillance System</title>
+    <!--  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="../static/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-camera-video"></i> Video Surveillance System
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-upload"></i> Upload Video</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="upload-section">
+                            <div class="mb-3">
+                                <label for="video-upload" class="form-label">Select Video File</label>
+                                <input class="form-control" type="file" id="video-upload" accept="video/*">
+                            </div>
+                            
+                            <div id="video-preview-container" class="mb-3 d-none">
+                                <h6>Video Preview</h6>
+                                <video id="video-preview" controls class="img-fluid rounded"></video>
+                                
+                                <div class="mt-3">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">File Information</h6>
+                                                    <ul class="list-group list-group-flush">
+                                                        <li class="list-group-item d-flex justify-content-between">
+                                                            <span>Filename:</span>
+                                                            <span id="file-name" class="text-muted"></span>
+                                                        </li>
+                                                        <li class="list-group-item d-flex justify-content-between">
+                                                            <span>Size:</span>
+                                                            <span id="file-size" class="text-muted"></span>
+                                                        </li>
+                                                        <li class="list-group-item d-flex justify-content-between">
+                                                            <span>Type:</span>
+                                                            <span id="file-type" class="text-muted"></span>
+                                                        </li>
+                                                        <li class="list-group-item d-flex justify-content-between">
+                                                            <span>Duration:</span>
+                                                            <span id="file-duration" class="text-muted">Calculating...</span>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mt-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-gear"></i> Processing Options</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="object-classes" class="form-label">Select Object Classes to Detect</label>
+                                    <select class="form-select" id="object-classes" multiple size="8">
+                                        {% for class_name in available_classes %}
+                                        <option value="{{ class_name }}" {% if class_name in ['person', 'car', 'truck', 'bus', 'cell phone'] %}selected{% endif %}>{{ class_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Hold Ctrl/Cmd to select multiple classes</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confidence-threshold" class="form-label">Confidence Threshold: <span id="confidence-value">0.5</span></label>
+                                    <input type="range" class="form-range" min="0.1" max="1.0" step="0.05" value="0.5" id="confidence-threshold">
+                                    <div class="form-text">Higher values mean more precise but fewer detections</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <button id="process-btn" class="btn btn-primary w-100" disabled>
+                                        <i class="bi bi-play-circle"></i> Process Video
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="processing-status" class="card shadow-sm mt-4 d-none">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-hourglass-split"></i> Processing Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-3">
+                            <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p id="status-message" class="mb-0 text-center">Initializing processing...</p>
+                    </div>
+                </div>
+
+                <div id="results-section" class="card shadow-sm mt-4 d-none">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-check-circle"></i> Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Input Video</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <video id="input-video-player" controls class="img-fluid rounded"></video>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Output Video</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <video id="output-video-player" controls class="img-fluid rounded"></video>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">Summary</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <ul class="list-group">
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>Input Video Duration:</span>
+                                                <span id="input-duration" class="badge bg-secondary"></span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>Output Video Duration:</span>
+                                                <span id="output-duration" class="badge bg-secondary"></span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>Total Unique Objects:</span>
+                                                <span id="total-objects" class="badge bg-primary"></span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div id="class-counts" class="list-group">
+                                            <!-- Class counts will be inserted here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Detected Objects</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Sr. No.</th>
+                                                <th>Object</th>
+                                                <th>First Seen Time</th>
+                                                <th>Last Seen Time</th>
+                                                <th>Duration</th>
+                                                <th>ROI Image</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="detections-table">
+                                            <!-- Detections will be inserted here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-3">
+        <div class="container text-center">
+            <p class="mb-0">Video Surveillance System &copy; 2023</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+</body>
+</html>
